@@ -1,6 +1,9 @@
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Configuration, OpenAIApi } from 'openai';
+
+// eslint-disable-next-line import/no-extraneous-dependencies
 import 'react-native-url-polyfill/auto';
 
 export default function App() {
@@ -10,26 +13,42 @@ export default function App() {
 
   const openai = new OpenAIApi(configuration);
 
-  async function sendRequest() {
+  const [prompt, setPrompt] = useState(null);
+  const [responseMessage, setResponseMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const sendRequest = async () => {
+    setLoading(true);
     try {
       const response = await openai.createCompletion({
         model: 'text-davinci-003',
-        prompt: 'Say about expo',
-        max_tokens: 7,
-        temperature: 0,
+        prompt,
       });
 
       console.log(response.data);
+      setResponseMessage(response.data.choices[0].text);
+      setPrompt(null);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-      <Button onPress={sendRequest} title="Send request" />
+      {/* eslint-disable-next-line react/style-prop-object */}
+      <StatusBar style="light" backgroundColor="#1abc9c" />
+
+      {loading ? <ActivityIndicator size="large" /> : <Text>{responseMessage}</Text>}
+
+      <TextInput
+        placeholder="Digite uma pergunta..."
+        value={prompt}
+        onChangeText={(text) => setPrompt(text)}
+      />
+
+      <Button onPress={() => sendRequest()} title="Enviar" />
     </View>
   );
 }
