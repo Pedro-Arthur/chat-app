@@ -16,22 +16,26 @@ export default function App() {
   const [prompt, setPrompt] = useState(null);
   const [responseMessage, setResponseMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const sendRequest = async () => {
-    setLoading(true);
-    try {
-      const response = await openai.createCompletion({
-        model: 'text-davinci-003',
-        prompt,
-      });
+    if (prompt) {
+      setLoading(true);
+      try {
+        const response = await openai.createChatCompletion({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
+        });
 
-      console.log(response.data);
-      setResponseMessage(response.data.choices[0].text);
-      setPrompt(null);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+        setResponseMessage(response.data.choices[0].message.content);
+        setPrompt(null);
+        setError(null);
+      } catch (e) {
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -39,6 +43,8 @@ export default function App() {
     <View style={styles.container}>
       {/* eslint-disable-next-line react/style-prop-object */}
       <StatusBar style="light" backgroundColor="#1abc9c" />
+
+      {error !== null && <Text style={styles.errorText}>Erro: {error.message}</Text>}
 
       {loading ? <ActivityIndicator size="large" /> : <Text>{responseMessage}</Text>}
 
@@ -59,5 +65,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorText: {
+    color: 'red',
   },
 });
