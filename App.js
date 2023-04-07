@@ -1,16 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-
-const messages = [
-  { id: 1, text: 'Hello!', sender: 'me' },
-  { id: 2, text: 'Hey there!', sender: 'other' },
-  { id: 3, text: 'How are you?', sender: 'me' },
-  { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
-];
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+} from 'react-native';
+import * as Font from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 
 const App = () => {
   const [text, setText] = useState('');
   const scrollViewRef = useRef();
+  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [fontLoaded, setFontLoaded] = useState(false);
 
   const handleSend = () => {
     if (text.trim()) {
@@ -19,6 +26,35 @@ const App = () => {
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
   };
+
+  const handleShowModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setMessages([
+      { id: 1, text: `Hello ${name}!`, sender: 'me' },
+      { id: 2, text: 'Hey there!', sender: 'other' },
+      { id: 3, text: 'How are you?', sender: 'me' },
+      { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
+    ]);
+  };
+
+  async function loadFonts() {
+    await Font.loadAsync({
+      // eslint-disable-next-line global-require
+      'nunito-regular': require('./assets/fonts/Nunito-Regular.ttf'),
+      // eslint-disable-next-line global-require
+      'nunito-bold': require('./assets/fonts/Nunito-Bold.ttf'),
+    });
+    setFontLoaded(true);
+  }
+
+  useEffect(() => {
+    loadFonts();
+    handleShowModal();
+  }, []);
 
   const renderMessage = ({ id, text, sender }) => {
     const messageStyle = sender === 'me' ? styles.myMessage : styles.otherMessage;
@@ -35,8 +71,33 @@ const App = () => {
     );
   };
 
+  if (!fontLoaded) {
+    return <Text>Carregando...</Text>;
+  }
+
   return (
     <View style={styles.container}>
+      <Modal
+        visible={showModal}
+        transparent
+        onRequestClose={handleCloseModal}
+        backdropDismiss={false}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalText}>Digite seu nome:</Text>
+          <TextInput
+            style={styles.textInput}
+            onChangeText={setName}
+            value={name}
+            placeholder="Seu nome aqui"
+          />
+          <TouchableOpacity style={styles.button} onPress={handleCloseModal}>
+            <Text style={styles.buttonText}>Continuar</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chat dos Mestres</Text>
       </View>
@@ -57,7 +118,7 @@ const App = () => {
           placeholderTextColor="#757575"
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Ionicons name="ios-send" size={20} color="white" />
         </TouchableOpacity>
       </View>
     </View>
@@ -70,6 +131,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  modalContainer: {
+    padding: 20,
+    borderRadius: 10,
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    marginBottom: 10,
+    fontFamily: 'nunito-regular',
+  },
+  textInput: {
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    height: 40,
+    width: '100%',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    fontFamily: 'nunito-regular',
+  },
+  button: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    padding: 10,
+  },
+  buttonText: {
+    color: '#fff',
+
+    textAlign: 'center',
+    fontFamily: 'nunito-bold',
   },
   header: {
     height: 50,
@@ -85,7 +179,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+
+    fontFamily: 'nunito-bold',
   },
   messages: {
     flex: 1,
@@ -114,9 +209,11 @@ const styles = StyleSheet.create({
   },
   myMessageText: {
     color: '#000',
+    fontFamily: 'nunito-regular',
   },
   otherMessageText: {
     color: '#000',
+    fontFamily: 'nunito-regular',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -125,6 +222,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     paddingHorizontal: 16,
     paddingVertical: 8,
+    fontFamily: 'nunito-regular',
   },
   input: {
     flex: 1,
@@ -133,6 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     marginRight: 8,
+    fontFamily: 'nunito-regular',
   },
   sendButton: {
     backgroundColor: '#4caf50',
@@ -142,6 +241,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+
+    fontFamily: 'nunito-bold',
   },
 });
