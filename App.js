@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import Constants from 'expo-constants';
 
@@ -19,8 +20,19 @@ import * as Font from 'expo-font';
 // Biblioteca de ícones.
 import { Ionicons } from '@expo/vector-icons';
 
+// OpenAI
+import { Configuration, OpenAIApi } from 'openai';
+
 // Cores
 import colors from './theme/colors';
+
+import 'react-native-url-polyfill/auto';
+
+const configuration = new Configuration({
+  apiKey: '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',
+});
+
+const openai = new OpenAIApi(configuration);
 
 const App = () => {
   // Nome do usuário.
@@ -33,6 +45,10 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   // Status de carregamento da fonte Nunito.
   const [fontLoaded, setFontLoaded] = useState(false);
+  // Status de carregamento da mensagem.
+  const [responseLoading, setResponseLoading] = useState(false);
+  // Erro.
+  const [error, setError] = useState(null);
 
   // Ref do Scroll onde as mensagens ficam.
   const scrollViewRef = useRef();
@@ -47,13 +63,33 @@ const App = () => {
   };
 
   // Função que manda a mensagem.
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (promptText.trim()) {
-      messages.push({ id: messages.length + 1, text: promptText.trim(), sender: 'me' });
-      setPromptText('');
+      setResponseLoading(true);
 
-      // A cada mensagem enviada navega até o final do scroll.
-      scrollViewRef.current.scrollToEnd({ animated: true });
+      try {
+        messages.push({ id: Math.random(), text: promptText.trim(), sender: 'me' });
+        setPromptText('');
+
+        const response = await openai.createChatCompletion({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: promptText }],
+          temperature: 0,
+        });
+
+        messages.push({
+          id: Math.random(),
+          text: response.data.choices[0].message.content,
+          sender: 'other',
+        });
+
+        // A cada mensagem enviada navega até o final do scroll.
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      } catch (e) {
+        setError(e);
+      } finally {
+        setResponseLoading(false);
+      }
     }
   };
 
@@ -66,12 +102,7 @@ const App = () => {
   const handleCloseInitialModal = () => {
     if (userName) {
       setShowInitialModal(false);
-      setMessages([
-        { id: 1, text: `Hello ${userName}!`, sender: 'me' },
-        { id: 2, text: 'Hey there!', sender: 'other' },
-        { id: 3, text: 'How are you?', sender: 'me' },
-        { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
-      ]);
+      setMessages([{ id: 1, text: `Olá ${userName}!`, sender: 'other' }]);
     }
   };
 
@@ -153,8 +184,16 @@ const App = () => {
           placeholder="Digite uma mensagem..."
           placeholderTextColor={colors.placeholderGray}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-          <Ionicons name="ios-send" size={20} color="white" />
+        <TouchableOpacity
+          disabled={responseLoading}
+          style={styles.sendButton}
+          onPress={handleSendMessage}
+        >
+          {responseLoading ? (
+            <ActivityIndicator size={20} color={colors.white} />
+          ) : (
+            <Ionicons name="ios-send" size={20} color={colors.white} />
+          )}
         </TouchableOpacity>
       </View>
     </View>
