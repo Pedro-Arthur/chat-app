@@ -23,7 +23,8 @@
   "settings": {
     "import/core-modules": [
       "@expo/vector-icons",
-      "expo-font"
+      "expo-font",
+      "expo-constants"
     ]
   }
 }

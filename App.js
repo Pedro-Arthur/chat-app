@@ -8,12 +8,19 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import Constants from 'expo-constants';
+
+// Barra de status superior
+import { StatusBar } from 'expo-status-bar';
 
 // Importação de utilização de fontes no Expo.
 import * as Font from 'expo-font';
 
 // Biblioteca de ícones.
 import { Ionicons } from '@expo/vector-icons';
+
+// Cores
+import colors from './theme/colors';
 
 const App = () => {
   // Nome do usuário.
@@ -57,13 +64,15 @@ const App = () => {
 
   // Função que fecha modal inicial.
   const handleCloseInitialModal = () => {
-    setShowInitialModal(false);
-    setMessages([
-      { id: 1, text: `Hello ${userName}!`, sender: 'me' },
-      { id: 2, text: 'Hey there!', sender: 'other' },
-      { id: 3, text: 'How are you?', sender: 'me' },
-      { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
-    ]);
+    if (userName) {
+      setShowInitialModal(false);
+      setMessages([
+        { id: 1, text: `Hello ${userName}!`, sender: 'me' },
+        { id: 2, text: 'Hey there!', sender: 'other' },
+        { id: 3, text: 'How are you?', sender: 'me' },
+        { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
+      ]);
+    }
   };
 
   // Função que retorna um componente que renderiza o container da mensagem.
@@ -93,6 +102,9 @@ const App = () => {
 
   return (
     <View style={styles.container}>
+      {/* eslint-disable-next-line react/style-prop-object */}
+      <StatusBar translucent style="light" backgroundColor={colors.primary} />
+
       {/* Modal inicial */}
       <Modal
         visible={showInitialModal}
@@ -123,7 +135,12 @@ const App = () => {
       </View>
 
       {/* Lista de mensagens */}
-      <ScrollView style={styles.messages} keyboardShouldPersistTaps="always" ref={scrollViewRef}>
+      <ScrollView
+        contentContainerStyle={styles.messagesContainer}
+        style={styles.messages}
+        keyboardShouldPersistTaps="always"
+        ref={scrollViewRef}
+      >
         {messages.map(renderMessage)}
       </ScrollView>
 
@@ -134,7 +151,7 @@ const App = () => {
           value={promptText}
           onChangeText={setPromptText}
           placeholder="Digite uma mensagem..."
-          placeholderTextColor="#757575"
+          placeholderTextColor={colors.placeholderGray}
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
           <Ionicons name="ios-send" size={20} color="white" />
@@ -147,42 +164,44 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.backgroundGray,
   },
 
   // Modal
   modalContainer: {
-    padding: 20,
-    borderRadius: 10,
+    padding: 16,
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
+    width: '100%',
+    borderRadius: 5,
+    padding: 16,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     marginBottom: 10,
     fontFamily: 'nunito-regular',
   },
   modalTextInput: {
-    backgroundColor: '#eee',
+    backgroundColor: colors.textInputGray,
     borderRadius: 5,
     height: 40,
     width: '100%',
     paddingHorizontal: 10,
-    marginBottom: 20,
+    marginBottom: 16,
     fontFamily: 'nunito-regular',
   },
   modalButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.primary,
     borderRadius: 5,
     padding: 10,
   },
   modalButtonText: {
-    color: '#fff',
+    color: colors.white,
     textAlign: 'center',
     fontFamily: 'nunito-bold',
   },
@@ -190,15 +209,16 @@ const styles = StyleSheet.create({
   // Header
   header: {
     height: 50,
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.borderGray,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
+    marginTop: Constants.statusBarHeight,
   },
   headerTitle: {
     fontSize: 20,
@@ -209,18 +229,21 @@ const styles = StyleSheet.create({
   messages: {
     flex: 1,
     padding: 16,
-    marginTop: 50,
+    marginTop: 50 + Constants.statusBarHeight,
+  },
+  messagesContainer: {
+    paddingBottom: 16,
   },
   message: {
-    borderRadius: 8,
+    borderRadius: 5,
     padding: 8,
   },
   myMessage: {
-    backgroundColor: '#dcf8c6',
+    backgroundColor: colors.myMessage,
     alignSelf: 'flex-end',
   },
   otherMessage: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.otherMessage,
     alignSelf: 'flex-start',
   },
   myMessageContainer: {
@@ -232,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   messageText: {
-    color: '#000',
+    color: colors.black,
     fontFamily: 'nunito-regular',
   },
 
@@ -241,21 +264,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.borderGray,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    backgroundColor: colors.white,
   },
   messageInput: {
     flex: 1,
     height: 40,
     paddingHorizontal: 12,
-    backgroundColor: '#fff',
+    backgroundColor: colors.textInputGray,
     borderRadius: 20,
     marginRight: 8,
     fontFamily: 'nunito-regular',
   },
   sendButton: {
-    backgroundColor: '#4caf50',
+    backgroundColor: colors.primary,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
