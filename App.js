@@ -8,116 +8,135 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+
+// Importação de utilização de fontes no Expo.
 import * as Font from 'expo-font';
+
+// Biblioteca de ícones.
 import { Ionicons } from '@expo/vector-icons';
 
 const App = () => {
-  const [text, setText] = useState('');
-  const scrollViewRef = useRef();
-  const [showModal, setShowModal] = useState(false);
-  const [name, setName] = useState('');
+  // Nome do usuário.
+  const [userName, setUserName] = useState('');
+  // Guarda texto digitado.
+  const [promptText, setPromptText] = useState('');
+  // Status do modal inicial.
+  const [showInitialModal, setShowInitialModal] = useState(false);
+  // Mensagens enviadas e recebidas.
   const [messages, setMessages] = useState([]);
+  // Status de carregamento da fonte Nunito.
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  const handleSend = () => {
-    if (text.trim()) {
-      messages.push({ id: messages.length + 1, text: text.trim(), sender: 'me' });
-      setText('');
+  // Ref do Scroll onde as mensagens ficam.
+  const scrollViewRef = useRef();
+
+  // Função que carrega as fontes.
+  const loadFonts = async () => {
+    await Font.loadAsync({
+      'nunito-regular': require('./assets/fonts/Nunito-Regular.ttf'),
+      'nunito-bold': require('./assets/fonts/Nunito-Bold.ttf'),
+    });
+    setFontLoaded(true);
+  };
+
+  // Função que manda a mensagem.
+  const handleSendMessage = () => {
+    if (promptText.trim()) {
+      messages.push({ id: messages.length + 1, text: promptText.trim(), sender: 'me' });
+      setPromptText('');
+
+      // A cada mensagem enviada navega até o final do scroll.
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
   };
 
-  const handleShowModal = () => {
-    setShowModal(true);
+  // Função que abre modal inicial.
+  const handleShowInitialModal = () => {
+    setShowInitialModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  // Função que fecha modal inicial.
+  const handleCloseInitialModal = () => {
+    setShowInitialModal(false);
     setMessages([
-      { id: 1, text: `Hello ${name}!`, sender: 'me' },
+      { id: 1, text: `Hello ${userName}!`, sender: 'me' },
       { id: 2, text: 'Hey there!', sender: 'other' },
       { id: 3, text: 'How are you?', sender: 'me' },
       { id: 4, text: 'I am doing well, thanks. How about you?', sender: 'other' },
     ]);
   };
 
-  async function loadFonts() {
-    await Font.loadAsync({
-      // eslint-disable-next-line global-require
-      'nunito-regular': require('./assets/fonts/Nunito-Regular.ttf'),
-      // eslint-disable-next-line global-require
-      'nunito-bold': require('./assets/fonts/Nunito-Bold.ttf'),
-    });
-    setFontLoaded(true);
-  }
-
-  useEffect(() => {
-    loadFonts();
-    handleShowModal();
-  }, []);
-
+  // Função que retorna um componente que renderiza o container da mensagem.
   const renderMessage = ({ id, text, sender }) => {
     const messageStyle = sender === 'me' ? styles.myMessage : styles.otherMessage;
     const messageContainerStyle =
       sender === 'me' ? styles.myMessageContainer : styles.otherMessageContainer;
-    const messageTextStyle = sender === 'me' ? styles.myMessageText : styles.otherMessageText;
 
     return (
       <View key={id} style={messageContainerStyle}>
         <View style={[styles.message, messageStyle]}>
-          <Text style={messageTextStyle}>{text}</Text>
+          <Text style={styles.messageText}>{text}</Text>
         </View>
       </View>
     );
   };
 
+  useEffect(() => {
+    loadFonts();
+    handleShowInitialModal();
+  }, []);
+
+  // Se as fontes não estiverem carregadas mostre um texto de loading.
   if (!fontLoaded) {
     return <Text>Carregando...</Text>;
   }
 
   return (
     <View style={styles.container}>
+      {/* Modal inicial */}
       <Modal
-        visible={showModal}
+        visible={showInitialModal}
         transparent
-        onRequestClose={handleCloseModal}
+        onRequestClose={handleCloseInitialModal}
         backdropDismiss={false}
         animationType="slide"
       >
         <View style={styles.modalContainer}>
-          <Text style={styles.modalText}>Digite seu nome:</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={setName}
-            value={name}
-            placeholder="Seu nome aqui"
-          />
-          <TouchableOpacity style={styles.button} onPress={handleCloseModal}>
-            <Text style={styles.buttonText}>Continuar</Text>
-          </TouchableOpacity>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Digite seu nome:</Text>
+            <TextInput
+              style={styles.modalTextInput}
+              onChangeText={setUserName}
+              value={userName}
+              placeholder="Seu nome aqui"
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={handleCloseInitialModal}>
+              <Text style={styles.modalButtonText}>Continuar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chat dos Mestres</Text>
       </View>
-      <ScrollView
-        style={styles.messages}
-        contentContainerStyle={styles.messagesContainer}
-        keyboardShouldPersistTaps="always"
-        ref={scrollViewRef}
-      >
+
+      {/* Lista de mensagens */}
+      <ScrollView style={styles.messages} keyboardShouldPersistTaps="always" ref={scrollViewRef}>
         {messages.map(renderMessage)}
       </ScrollView>
-      <View style={styles.inputContainer}>
+
+      {/* Footer de mensagens */}
+      <View style={styles.messageInputContainer}>
         <TextInput
-          style={styles.input}
-          value={text}
-          onChangeText={setText}
-          placeholder="Type a message..."
+          style={styles.messageInput}
+          value={promptText}
+          onChangeText={setPromptText}
+          placeholder="Digite uma mensagem..."
           placeholderTextColor="#757575"
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+        <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
           <Ionicons name="ios-send" size={20} color="white" />
         </TouchableOpacity>
       </View>
@@ -125,13 +144,13 @@ const App = () => {
   );
 };
 
-export default App;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+
+  // Modal
   modalContainer: {
     padding: 20,
     borderRadius: 10,
@@ -140,12 +159,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalText: {
+  modalBox: {
+    backgroundColor: '#fff',
+  },
+  modalTitle: {
     fontSize: 18,
     marginBottom: 10,
     fontFamily: 'nunito-regular',
   },
-  textInput: {
+  modalTextInput: {
     backgroundColor: '#eee',
     borderRadius: 5,
     height: 40,
@@ -154,17 +176,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: 'nunito-regular',
   },
-  button: {
+  modalButton: {
     backgroundColor: '#4CAF50',
     borderRadius: 5,
     padding: 10,
   },
-  buttonText: {
+  modalButtonText: {
     color: '#fff',
-
     textAlign: 'center',
     fontFamily: 'nunito-bold',
   },
+
+  // Header
   header: {
     height: 50,
     backgroundColor: '#fff',
@@ -179,9 +202,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-
     fontFamily: 'nunito-bold',
   },
+
+  // Mensagens
   messages: {
     flex: 1,
     padding: 16,
@@ -207,24 +231,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  myMessageText: {
+  messageText: {
     color: '#000',
     fontFamily: 'nunito-regular',
   },
-  otherMessageText: {
-    color: '#000',
-    fontFamily: 'nunito-regular',
-  },
-  inputContainer: {
+
+  // Footer de mensagens
+  messageInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    fontFamily: 'nunito-regular',
   },
-  input: {
+  messageInput: {
     flex: 1,
     height: 40,
     paddingHorizontal: 12,
@@ -239,9 +260,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  sendButtonText: {
-    color: '#fff',
-
-    fontFamily: 'nunito-bold',
-  },
 });
+
+export default App;

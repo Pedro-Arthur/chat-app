@@ -16,6 +16,14 @@
     "react/jsx-props-no-spreading": "off",
     "react/prop-types": 0,
     "react/destructuring-assignment": "off",
-    "react/function-component-definition": "off"
+    "react/function-component-definition": "off",
+    "global-require": 0,
+    "no-shadow": "off"
+  },
+  "settings": {
+    "import/core-modules": [
+      "@expo/vector-icons",
+      "expo-font"
+    ]
   }
 }
