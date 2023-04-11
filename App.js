@@ -9,6 +9,7 @@ import {
   Modal,
   ActivityIndicator,
   Keyboard,
+  Alert,
 } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +25,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 // OpenAI
 import { Configuration, OpenAIApi } from 'openai';
+
+// NetInfo
+import NetInfo from '@react-native-community/netinfo';
 
 // Cores
 import colors from './theme/colors';
@@ -60,6 +64,15 @@ const App = () => {
       'nunito-bold': require('./assets/fonts/Nunito-Bold.ttf'),
     });
     setFontLoaded(true);
+  };
+
+  // Função que checa status da conexão.
+  const checkInternetConnection = async () => {
+    const netInfo = await NetInfo.fetch();
+
+    if (!netInfo.isConnected) {
+      Alert.alert('Sem conexão com a internet', 'Verifique sua conexão e tente novamente.');
+    }
   };
 
   // Função que manda a mensagem e aguarda resposta.
@@ -179,6 +192,7 @@ const App = () => {
 
   // Executa quando abre a tela.
   useEffect(() => {
+    checkInternetConnection();
     loadFonts();
     handleStoredData();
   }, []);

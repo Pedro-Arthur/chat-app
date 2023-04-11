@@ -25,7 +25,8 @@
       "@expo/vector-icons",
       "expo-font",
       "expo-constants",
-      "react-native-url-polyfill"
+      "react-native-url-polyfill",
+      "@react-native-community/netinfo"
     ]
   }
 }
