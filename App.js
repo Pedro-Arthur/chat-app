@@ -67,7 +67,6 @@ const App = () => {
   // Função que adiciona mensagem na lista.
   const addMessageInList = (text, sender) => {
     messages.push({
-      id: Math.random(),
       text,
       sender,
     });
@@ -128,13 +127,13 @@ const App = () => {
   };
 
   // Função que retorna um componente que renderiza o container da mensagem.
-  const renderMessage = ({ id, text, sender }) => {
+  const renderMessage = ({ text, sender }, index) => {
     const messageStyle = sender === 'me' ? styles.myMessage : styles.otherMessage;
     const messageContainerStyle =
       sender === 'me' ? styles.myMessageContainer : styles.otherMessageContainer;
 
     return (
-      <View key={id} style={messageContainerStyle}>
+      <View key={index} style={messageContainerStyle}>
         <View style={[styles.message, messageStyle]}>
           <Text style={styles.messageText}>{text}</Text>
         </View>
