@@ -8,8 +8,10 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Barra de status superior
 import { StatusBar } from 'expo-status-bar';
@@ -62,14 +64,24 @@ const App = () => {
     setFontLoaded(true);
   };
 
-  // Função que manda a mensagem.
+  // Função que adiciona mensagem na lista.
+  const addMessageInList = (text, sender) => {
+    messages.push({
+      id: Math.random(),
+      text,
+      sender,
+    });
+  };
+
+  // Função que manda a mensagem e aguarda resposta.
   const handleSendMessage = async () => {
     if (promptText.trim()) {
       setResponseLoading(true);
 
       try {
-        messages.push({ id: Math.random(), text: promptText.trim(), sender: 'me' });
+        addMessageInList(promptText.trim(), 'me');
         setPromptText('');
+        Keyboard.dismiss();
 
         const response = await openai.createChatCompletion({
           model: 'gpt-3.5-turbo',
@@ -77,11 +89,7 @@ const App = () => {
           temperature: 0,
         });
 
-        messages.push({
-          id: Math.random(),
-          text: response.data.choices[0].message.content,
-          sender: 'other',
-        });
+        addMessageInList(response.data.choices[0].message.content, 'other');
 
         // A cada mensagem enviada navega até o final do scroll.
         scrollViewRef.current.scrollToEnd({ animated: true });
@@ -99,10 +107,23 @@ const App = () => {
   };
 
   // Função que fecha modal inicial.
-  const handleCloseInitialModal = () => {
+  const handleCloseInitialModal = async () => {
     if (userName) {
+      await AsyncStorage.setItem('userName', userName);
+      addMessageInList(`Olá ${userName}! Como posso te ajudar?`, 'other');
       setShowInitialModal(false);
-      setMessages([{ id: 1, text: `Olá ${userName}!`, sender: 'other' }]);
+    }
+  };
+
+  // Função que lida com o usuário guardado no storage.
+  const handleStoredUserName = async () => {
+    const storedUserName = await AsyncStorage.getItem('userName');
+
+    if (storedUserName) {
+      setUserName(storedUserName);
+      addMessageInList(`Olá ${storedUserName}! Como posso te ajudar?`, 'other');
+    } else {
+      handleShowInitialModal();
     }
   };
 
@@ -123,7 +144,7 @@ const App = () => {
 
   useEffect(() => {
     loadFonts();
-    handleShowInitialModal();
+    handleStoredUserName();
   }, []);
 
   // Se as fontes não estiverem carregadas mostre um texto de loading.
