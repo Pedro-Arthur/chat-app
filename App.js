@@ -120,6 +120,13 @@ const App = () => {
     }
   };
 
+  // Função que limpa histórico de mensagens.
+  const clearMessages = async () => {
+    const newMessages = [{ text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' }];
+    setMessages(newMessages);
+    await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
+  };
+
   // Função que lida com os dados guardados no storage.
   const handleStoredData = async () => {
     const storedUserName = await AsyncStorage.getItem('userName');
@@ -195,7 +202,10 @@ const App = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat dos Mestres</Text>
+        <Text style={styles.headerTitle}>TransitTalk</Text>
+        <TouchableOpacity onPress={clearMessages} style={styles.headerButton}>
+          <Ionicons name="ios-trash-outline" size={20} color={colors.red} />
+        </TouchableOpacity>
       </View>
 
       {/* Lista de mensagens */}
@@ -295,6 +305,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontFamily: 'nunito-bold',
+  },
+  headerButton: {
+    position: 'absolute',
+    right: 16,
   },
 
   // Mensagens
