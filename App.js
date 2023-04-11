@@ -64,21 +64,16 @@ const App = () => {
     setFontLoaded(true);
   };
 
-  // Função que adiciona mensagem na lista.
-  const addMessageInList = (text, sender) => {
-    messages.push({
-      text,
-      sender,
-    });
-  };
-
   // Função que manda a mensagem e aguarda resposta.
   const handleSendMessage = async () => {
     if (promptText.trim()) {
       setResponseLoading(true);
 
       try {
-        addMessageInList(promptText.trim(), 'me');
+        const newMessages = [...messages];
+        newMessages.push({ text: promptText.trim(), sender: 'me' });
+        setMessages(newMessages);
+
         setPromptText('');
         Keyboard.dismiss();
 
@@ -88,7 +83,8 @@ const App = () => {
           temperature: 0,
         });
 
-        addMessageInList(response.data.choices[0].message.content, 'other');
+        newMessages.push({ text: response.data.choices[0].message.content, sender: 'other' });
+        setMessages(newMessages);
 
         // A cada mensagem enviada navega até o final do scroll.
         scrollViewRef.current.scrollToEnd({ animated: true });
@@ -109,7 +105,10 @@ const App = () => {
   const handleCloseInitialModal = async () => {
     if (userName) {
       await AsyncStorage.setItem('userName', userName);
-      addMessageInList(`Olá ${userName}! Como posso te ajudar?`, 'other');
+      setMessages([
+        ...messages,
+        { text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' },
+      ]);
       setShowInitialModal(false);
     }
   };
@@ -120,7 +119,10 @@ const App = () => {
 
     if (storedUserName) {
       setUserName(storedUserName);
-      addMessageInList(`Olá ${storedUserName}! Como posso te ajudar?`, 'other');
+      setMessages([
+        ...messages,
+        { text: `Olá ${storedUserName}! Como posso te ajudar?`, sender: 'other' },
+      ]);
     } else {
       handleShowInitialModal();
     }
