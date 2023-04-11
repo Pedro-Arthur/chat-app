@@ -74,6 +74,8 @@ const App = () => {
         newMessages.push({ text: promptText.trim(), sender: 'me' });
         setMessages(newMessages);
 
+        await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
+
         setPromptText('');
         Keyboard.dismiss();
 
@@ -85,6 +87,8 @@ const App = () => {
 
         newMessages.push({ text: response.data.choices[0].message.content, sender: 'other' });
         setMessages(newMessages);
+
+        await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
 
         // A cada mensagem enviada navega até o final do scroll.
         scrollViewRef.current.scrollToEnd({ animated: true });
@@ -105,24 +109,30 @@ const App = () => {
   const handleCloseInitialModal = async () => {
     if (userName) {
       await AsyncStorage.setItem('userName', userName);
-      setMessages([
-        ...messages,
-        { text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' },
-      ]);
+
+      const newMessages = [...messages];
+      newMessages.push({ text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' });
+      setMessages(newMessages);
+
+      await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
+
       setShowInitialModal(false);
     }
   };
 
-  // Função que lida com o usuário guardado no storage.
-  const handleStoredUserName = async () => {
+  // Função que lida com os dados guardados no storage.
+  const handleStoredData = async () => {
     const storedUserName = await AsyncStorage.getItem('userName');
+    const storedMessages = JSON.parse(await AsyncStorage.getItem('messages')) || [];
 
     if (storedUserName) {
       setUserName(storedUserName);
-      setMessages([
-        ...messages,
-        { text: `Olá ${storedUserName}! Como posso te ajudar?`, sender: 'other' },
-      ]);
+
+      const newMessages = [...storedMessages];
+      newMessages.push({ text: `Olá ${storedUserName}! Como posso te ajudar?`, sender: 'other' });
+      setMessages(newMessages);
+
+      await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
     } else {
       handleShowInitialModal();
     }
@@ -143,9 +153,10 @@ const App = () => {
     );
   };
 
+  // Executa quando abre a tela.
   useEffect(() => {
     loadFonts();
-    handleStoredUserName();
+    handleStoredData();
   }, []);
 
   // Se as fontes não estiverem carregadas mostre um texto de loading.
