@@ -66,9 +66,9 @@ const App = () => {
   const handleSendMessage = async () => {
     if (promptText.trim()) {
       setResponseLoading(true);
+      const newMessages = [...messages];
 
       try {
-        const newMessages = [...messages];
         newMessages.push({ text: promptText.trim(), sender: 'me' });
         setMessages(newMessages);
 
@@ -88,7 +88,6 @@ const App = () => {
 
         await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
       } catch (e) {
-        const newMessages = [...messages];
         newMessages.push({ text: e.message, sender: 'other', error: true });
         setMessages(newMessages);
         await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
@@ -107,6 +106,7 @@ const App = () => {
   const handleContentSizeChange = (contentWidth, contentHeight) => {
     const paddingBottom = 16;
     const scrollHeight = contentHeight - paddingBottom;
+    // Dá scroll até o final da lista.
     scrollViewRef.current.scrollTo({ y: scrollHeight });
   };
 
