@@ -220,7 +220,11 @@ const App = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>TransitTalk</Text>
-        <TouchableOpacity onPress={clearMessages} style={styles.headerButton}>
+        <TouchableOpacity
+          disabled={responseLoading}
+          onPress={clearMessages}
+          style={styles.headerButton}
+        >
           <Ionicons name="ios-trash-outline" size={20} color={colors.red} />
         </TouchableOpacity>
       </View>
