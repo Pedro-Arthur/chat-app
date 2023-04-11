@@ -49,8 +49,6 @@ const App = () => {
   const [fontLoaded, setFontLoaded] = useState(false);
   // Status de carregamento da mensagem.
   const [responseLoading, setResponseLoading] = useState(false);
-  // Erro.
-  const [error, setError] = useState(null);
 
   // Ref do Scroll onde as mensagens ficam.
   const scrollViewRef = useRef();
@@ -89,11 +87,11 @@ const App = () => {
         setMessages(newMessages);
 
         await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
-
-        // A cada mensagem enviada navega até o final do scroll.
-        scrollViewRef.current.scrollToEnd({ animated: true });
       } catch (e) {
-        setError(e);
+        const newMessages = [...messages];
+        newMessages.push({ text: e.message, sender: 'other', error: true });
+        setMessages(newMessages);
+        await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
       } finally {
         setResponseLoading(false);
       }
@@ -103,6 +101,13 @@ const App = () => {
   // Função que abre modal inicial.
   const handleShowInitialModal = () => {
     setShowInitialModal(true);
+  };
+
+  // Função que lida com a mudança de tamanho da lista de mensagens.
+  const handleContentSizeChange = (contentWidth, contentHeight) => {
+    const paddingBottom = 16;
+    const scrollHeight = contentHeight - paddingBottom;
+    scrollViewRef.current.scrollTo({ y: scrollHeight });
   };
 
   // Função que fecha modal inicial.
@@ -146,15 +151,27 @@ const App = () => {
   };
 
   // Função que retorna um componente que renderiza o container da mensagem.
-  const renderMessage = ({ text, sender }, index) => {
-    const messageStyle = sender === 'me' ? styles.myMessage : styles.otherMessage;
-    const messageContainerStyle =
-      sender === 'me' ? styles.myMessageContainer : styles.otherMessageContainer;
+  const renderMessage = ({ text, sender, error }, index) => {
+    let messageStyle;
+    let messageContainerStyle;
+    let { messageText } = styles;
+
+    if (sender === 'me') {
+      messageStyle = styles.myMessage;
+      messageContainerStyle = styles.myMessageContainer;
+    } else if (error === true) {
+      messageStyle = styles.errorMessage;
+      messageContainerStyle = styles.otherMessageContainer;
+      messageText = styles.errorMessageText;
+    } else {
+      messageStyle = styles.otherMessage;
+      messageContainerStyle = styles.otherMessageContainer;
+    }
 
     return (
       <View key={index} style={messageContainerStyle}>
         <View style={[styles.message, messageStyle]}>
-          <Text style={styles.messageText}>{text}</Text>
+          <Text style={messageText}>{text}</Text>
         </View>
       </View>
     );
@@ -214,6 +231,7 @@ const App = () => {
         style={styles.messages}
         keyboardShouldPersistTaps="always"
         ref={scrollViewRef}
+        onContentSizeChange={handleContentSizeChange}
       >
         {messages.map(renderMessage)}
       </ScrollView>
@@ -332,6 +350,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.otherMessage,
     alignSelf: 'flex-start',
   },
+  errorMessage: {
+    backgroundColor: colors.red,
+    alignSelf: 'flex-start',
+  },
   myMessageContainer: {
     alignItems: 'flex-end',
     marginBottom: 8,
@@ -342,6 +364,10 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: colors.black,
+    fontFamily: 'nunito-regular',
+  },
+  errorMessageText: {
+    color: colors.white,
     fontFamily: 'nunito-regular',
   },
 
