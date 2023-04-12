@@ -35,7 +35,7 @@ import colors from './theme/colors';
 import 'react-native-url-polyfill/auto';
 
 const configuration = new Configuration({
-  apiKey: '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',
+  apiKey: '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',
 });
 
 const openai = new OpenAIApi(configuration);
