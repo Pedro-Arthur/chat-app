@@ -5,11 +5,11 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   Modal,
   ActivityIndicator,
   Keyboard,
   Alert,
+  FlatList,
 } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -55,7 +55,7 @@ const App = () => {
   const [responseLoading, setResponseLoading] = useState(false);
 
   // Ref do Scroll onde as mensagens ficam.
-  const scrollViewRef = useRef();
+  const flatListRef = useRef();
 
   // Função que carrega as fontes.
   const loadFonts = async () => {
@@ -120,7 +120,7 @@ const App = () => {
     const paddingBottom = 16;
     const scrollHeight = contentHeight - paddingBottom;
     // Dá scroll até o final da lista.
-    scrollViewRef.current.scrollTo({ y: scrollHeight });
+    flatListRef.current.scrollToOffset({ offset: scrollHeight });
   };
 
   // Função que fecha modal inicial.
@@ -164,15 +164,15 @@ const App = () => {
   };
 
   // Função que retorna um componente que renderiza o container da mensagem.
-  const renderMessage = ({ text, sender, error }, index) => {
+  const renderMessage = ({ item }) => {
     let messageStyle;
     let messageContainerStyle;
     let { messageText } = styles;
 
-    if (sender === 'me') {
+    if (item.sender === 'me') {
       messageStyle = styles.myMessage;
       messageContainerStyle = styles.myMessageContainer;
-    } else if (error === true) {
+    } else if (item.error === true) {
       messageStyle = styles.errorMessage;
       messageContainerStyle = styles.otherMessageContainer;
       messageText = styles.errorMessageText;
@@ -182,9 +182,9 @@ const App = () => {
     }
 
     return (
-      <View key={index} style={messageContainerStyle}>
+      <View style={messageContainerStyle}>
         <View style={[styles.message, messageStyle]}>
-          <Text style={messageText}>{text}</Text>
+          <Text style={messageText}>{item.text}</Text>
         </View>
       </View>
     );
@@ -244,15 +244,16 @@ const App = () => {
       </View>
 
       {/* Lista de mensagens */}
-      <ScrollView
+      <FlatList
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item, index) => index.toString()}
         contentContainerStyle={styles.messagesContainer}
         style={styles.messages}
         keyboardShouldPersistTaps="always"
-        ref={scrollViewRef}
+        ref={flatListRef}
         onContentSizeChange={handleContentSizeChange}
-      >
-        {messages.map(renderMessage)}
-      </ScrollView>
+      />
 
       {/* Footer de mensagens */}
       <View style={styles.messageInputContainer}>
