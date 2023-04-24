@@ -1,17 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-  Keyboard,
-  Alert,
-  FlatList,
-} from 'react-native';
-import Constants from 'expo-constants';
+import { StyleSheet, Text, View, Keyboard, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Barra de status superior
@@ -19,9 +7,6 @@ import { StatusBar } from 'expo-status-bar';
 
 // Importação de utilização de fontes no Expo.
 import * as Font from 'expo-font';
-
-// Biblioteca de ícones.
-import { Ionicons } from '@expo/vector-icons';
 
 // OpenAI
 import { Configuration, OpenAIApi } from 'openai';
@@ -34,6 +19,13 @@ import colors from './theme/colors';
 
 import 'react-native-url-polyfill/auto';
 
+// Components
+import Footer from './components/Footer';
+import Header from './components/Header';
+import InitialModal from './components/InitialModal';
+import MessagesList from './components/MessagesList';
+
+// Config
 const configuration = new Configuration({
   apiKey: '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',
 });
@@ -163,33 +155,6 @@ const App = () => {
     }
   };
 
-  // Função que retorna um componente que renderiza o container da mensagem.
-  const renderMessage = ({ item }) => {
-    let messageStyle;
-    let messageContainerStyle;
-    let { messageText } = styles;
-
-    if (item.sender === 'me') {
-      messageStyle = styles.myMessage;
-      messageContainerStyle = styles.myMessageContainer;
-    } else if (item.error === true) {
-      messageStyle = styles.errorMessage;
-      messageContainerStyle = styles.otherMessageContainer;
-      messageText = styles.errorMessageText;
-    } else {
-      messageStyle = styles.otherMessage;
-      messageContainerStyle = styles.otherMessageContainer;
-    }
-
-    return (
-      <View style={messageContainerStyle}>
-        <View style={[styles.message, messageStyle]}>
-          <Text style={messageText}>{item.text}</Text>
-        </View>
-      </View>
-    );
-  };
-
   // Executa quando abre a tela.
   useEffect(() => {
     checkInternetConnection();
@@ -208,74 +173,30 @@ const App = () => {
       <StatusBar translucent style="light" backgroundColor={colors.primary} />
 
       {/* Modal inicial */}
-      <Modal
-        visible={showInitialModal}
-        transparent
-        onRequestClose={handleCloseInitialModal}
-        backdropDismiss={false}
-        animationType="slide"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Digite seu nome:</Text>
-            <TextInput
-              style={styles.modalTextInput}
-              onChangeText={setUserName}
-              value={userName}
-              placeholder="Seu nome aqui"
-            />
-            <TouchableOpacity style={styles.modalButton} onPress={handleCloseInitialModal}>
-              <Text style={styles.modalButtonText}>Continuar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <InitialModal
+        handleCloseInitialModal={handleCloseInitialModal}
+        setUserName={setUserName}
+        userName={userName}
+        showInitialModal={showInitialModal}
+      />
 
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>TransitTalk</Text>
-        <TouchableOpacity
-          disabled={responseLoading}
-          onPress={clearMessages}
-          style={styles.headerButton}
-        >
-          <Ionicons name="ios-trash-outline" size={20} color={colors.red} />
-        </TouchableOpacity>
-      </View>
+      <Header responseLoading={responseLoading} clearMessages={clearMessages} />
 
       {/* Lista de mensagens */}
-      <FlatList
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item, index) => index.toString()}
-        contentContainerStyle={styles.messagesContainer}
-        style={styles.messages}
-        keyboardShouldPersistTaps="always"
-        ref={flatListRef}
-        onContentSizeChange={handleContentSizeChange}
+      <MessagesList
+        messages={messages}
+        flatListRef={flatListRef}
+        handleContentSizeChange={handleContentSizeChange}
       />
 
       {/* Footer de mensagens */}
-      <View style={styles.messageInputContainer}>
-        <TextInput
-          style={styles.messageInput}
-          value={promptText}
-          onChangeText={setPromptText}
-          placeholder="Digite uma mensagem..."
-          placeholderTextColor={colors.placeholderGray}
-        />
-        <TouchableOpacity
-          disabled={responseLoading}
-          style={styles.sendButton}
-          onPress={handleSendMessage}
-        >
-          {responseLoading ? (
-            <ActivityIndicator size={20} color={colors.white} />
-          ) : (
-            <Ionicons name="ios-send" size={20} color={colors.white} />
-          )}
-        </TouchableOpacity>
-      </View>
+      <Footer
+        handleSendMessage={handleSendMessage}
+        promptText={promptText}
+        setPromptText={setPromptText}
+        responseLoading={responseLoading}
+      />
     </View>
   );
 };
@@ -284,136 +205,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundGray,
-  },
-
-  // Modal
-  modalContainer: {
-    padding: 16,
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBox: {
-    backgroundColor: colors.white,
-    width: '100%',
-    borderRadius: 5,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 17,
-    marginBottom: 10,
-    fontFamily: 'nunito-regular',
-  },
-  modalTextInput: {
-    backgroundColor: colors.textInputGray,
-    borderRadius: 5,
-    height: 40,
-    width: '100%',
-    paddingHorizontal: 10,
-    marginBottom: 16,
-    fontFamily: 'nunito-regular',
-  },
-  modalButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 5,
-    padding: 10,
-  },
-  modalButtonText: {
-    color: colors.white,
-    textAlign: 'center',
-    fontFamily: 'nunito-bold',
-  },
-
-  // Header
-  header: {
-    height: 50,
-    backgroundColor: colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderGray,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    marginTop: Constants.statusBarHeight,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'nunito-bold',
-  },
-  headerButton: {
-    position: 'absolute',
-    right: 16,
-  },
-
-  // Mensagens
-  messages: {
-    flex: 1,
-    padding: 16,
-    marginTop: 50 + Constants.statusBarHeight,
-  },
-  messagesContainer: {
-    paddingBottom: 16,
-  },
-  message: {
-    borderRadius: 5,
-    padding: 8,
-  },
-  myMessage: {
-    backgroundColor: colors.myMessage,
-    alignSelf: 'flex-end',
-  },
-  otherMessage: {
-    backgroundColor: colors.otherMessage,
-    alignSelf: 'flex-start',
-  },
-  errorMessage: {
-    backgroundColor: colors.red,
-    alignSelf: 'flex-start',
-  },
-  myMessageContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  otherMessageContainer: {
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  messageText: {
-    color: colors.black,
-    fontFamily: 'nunito-regular',
-  },
-  errorMessageText: {
-    color: colors.white,
-    fontFamily: 'nunito-regular',
-  },
-
-  // Footer de mensagens
-  messageInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colors.borderGray,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: colors.white,
-  },
-  messageInput: {
-    flex: 1,
-    height: 40,
-    paddingHorizontal: 12,
-    backgroundColor: colors.textInputGray,
-    borderRadius: 20,
-    marginRight: 8,
-    fontFamily: 'nunito-regular',
-  },
-  sendButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
 });
 
