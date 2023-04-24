@@ -11,6 +11,8 @@ const Footer = ({ promptText, setPromptText, responseLoading, handleSendMessage 
       onChangeText={setPromptText}
       placeholder="Digite uma mensagem..."
       placeholderTextColor={colors.placeholderGray}
+      keyboardType="numeric"
+      maxLength={4}
     />
     <TouchableOpacity
       disabled={responseLoading}

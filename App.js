@@ -25,6 +25,9 @@ import Header from './components/Header';
 import InitialModal from './components/InitialModal';
 import MessagesList from './components/MessagesList';
 
+// Questões
+import questions from './utils/questions';
+
 // Config
 const configuration = new Configuration({
   apiKey: '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',
@@ -69,12 +72,13 @@ const App = () => {
 
   // Função que manda a mensagem e aguarda resposta.
   const handleSendMessage = async () => {
-    if (promptText.trim()) {
+    const replacedValue = promptText.trim().replace(/[^0-9]/g, '');
+    if (replacedValue) {
       setResponseLoading(true);
       const newMessages = [...messages];
 
       try {
-        newMessages.push({ text: promptText.trim(), sender: 'me' });
+        newMessages.push({ text: replacedValue, sender: 'me' });
         setMessages(newMessages);
 
         await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
@@ -82,13 +86,67 @@ const App = () => {
         setPromptText('');
         Keyboard.dismiss();
 
-        const response = await openai.createChatCompletion({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: promptText }],
-          temperature: 0,
-        });
+        const lastMessageByOther = messages[messages.length - 1];
 
-        newMessages.push({ text: response.data.choices[0].message.content, sender: 'other' });
+        if (lastMessageByOther.type && lastMessageByOther.type === 'categoryQuestion') {
+          const findCategory = questions.find((i) => i.id.toString() === replacedValue);
+
+          if (findCategory) {
+            newMessages.push({
+              text: `Selecione uma pergunta:\n${findCategory.questions
+                .map((i) => `\n${i.id}) ${i.text}`)
+                .join('')}`,
+              sender: 'other',
+              type: 'question',
+            });
+          } else {
+            newMessages.push({ text: 'Opção inválida!', sender: 'other', error: true });
+            newMessages.push({
+              text: `Selecione uma categoria:\n${questions
+                .map((i) => `\n${i.id}) ${i.category}`)
+                .join('')}`,
+              sender: 'other',
+              type: 'categoryQuestion',
+            });
+          }
+        } else {
+          const myMessages = messages.filter((i) => i.sender === 'me');
+
+          const findCategory = questions.find(
+            (i) => i.id.toString() === myMessages[myMessages.length - 1].text
+          );
+
+          const findQuestion = findCategory.questions.find(
+            (i) => i.id.toString() === replacedValue
+          );
+
+          if (!findQuestion) {
+            newMessages.push({ text: 'Opção inválida!', sender: 'other', error: true });
+            newMessages.push({
+              text: `Selecione uma categoria:\n${questions
+                .map((i) => `\n${i.id}) ${i.category}`)
+                .join('')}`,
+              sender: 'other',
+              type: 'categoryQuestion',
+            });
+          } else {
+            const response = await openai.createChatCompletion({
+              model: 'gpt-3.5-turbo',
+              messages: [{ role: 'user', content: findQuestion.text }],
+              temperature: 0,
+            });
+
+            newMessages.push({ text: response.data.choices[0].message.content, sender: 'other' });
+            newMessages.push({
+              text: `Selecione uma categoria:\n${questions
+                .map((i) => `\n${i.id}) ${i.category}`)
+                .join('')}`,
+              sender: 'other',
+              type: 'categoryQuestion',
+            });
+          }
+        }
+
         setMessages(newMessages);
 
         await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
@@ -121,7 +179,13 @@ const App = () => {
       await AsyncStorage.setItem('userName', userName);
 
       const newMessages = [...messages];
-      newMessages.push({ text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' });
+      newMessages.push({
+        text: `Olá ${userName}! Selecione uma categoria:\n${questions
+          .map((i) => `\n${i.id}) ${i.category}`)
+          .join('')}`,
+        sender: 'other',
+        type: 'categoryQuestion',
+      });
       setMessages(newMessages);
 
       await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
@@ -132,7 +196,15 @@ const App = () => {
 
   // Função que limpa histórico de mensagens.
   const clearMessages = async () => {
-    const newMessages = [{ text: `Olá ${userName}! Como posso te ajudar?`, sender: 'other' }];
+    const newMessages = [
+      {
+        text: `Olá ${userName}! Selecione uma categoria:\n${questions
+          .map((i) => `\n${i.id}) ${i.category}`)
+          .join('')}`,
+        sender: 'other',
+        type: 'categoryQuestion',
+      },
+    ];
     setMessages(newMessages);
     await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
   };
@@ -146,7 +218,13 @@ const App = () => {
       setUserName(storedUserName);
 
       const newMessages = [...storedMessages];
-      newMessages.push({ text: `Olá ${storedUserName}! Como posso te ajudar?`, sender: 'other' });
+      newMessages.push({
+        text: `Olá ${storedUserName}! Selecione uma categoria:\n${questions
+          .map((i) => `\n${i.id}) ${i.category}`)
+          .join('')}`,
+        sender: 'other',
+        type: 'categoryQuestion',
+      });
       setMessages(newMessages);
 
       await AsyncStorage.setItem('messages', JSON.stringify(newMessages));
