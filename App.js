@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, Keyboard, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Env
+import { API_KEY } from '@env';
+
 // Barra de status superior
 import { StatusBar } from 'expo-status-bar';
 
@@ -30,7 +33,7 @@ import questions from './utils/questions';
 
 // Config
 const configuration = new Configuration({
-  apiKey: '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',
+  apiKey: API_KEY || '',
 });
 
 const openai = new OpenAIApi(configuration);
