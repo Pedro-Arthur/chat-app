@@ -33,7 +33,7 @@ import questions from './utils/questions';
 
 // Config
 const configuration = new Configuration({
-  apiKey: API_KEY || '',
+  apiKey: API_KEY,
 });
 
 const openai = new OpenAIApi(configuration);
